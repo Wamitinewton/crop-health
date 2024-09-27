@@ -3,6 +3,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:farmshield/calc/fertilizer_calculator.dart';
 import 'package:farmshield/models/weather_model.dart';
+import 'package:farmshield/pages/fertilizer_screen.dart';
 import 'package:farmshield/pages/information.dart';
 import 'package:farmshield/services/searching.dart';
 import 'package:farmshield/services/weather_service.dart';
@@ -98,8 +99,6 @@ class _HomeState extends State<Home> {
       child: StreamBuilder<DocumentSnapshot>(
           stream: docref.snapshots(),
           builder: (context, snapshot) {
-            
-
             return Column(
               children: [
                 Row(
@@ -248,43 +247,90 @@ class _HomeState extends State<Home> {
                     ),
                   ),
                 ),
-                GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) =>
-                                const MyCustomForm(type: "any")));
-                  },
-                  child: Align(
-                    alignment: Alignment.bottomLeft,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 20),
-                      child: Container(
-                        height: 140,
-                        width: 200,
-                        decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(17)),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            const Image(
-                              image: AssetImage("assets/icons/fertilizer.png"),
-                              height: 60,
+                Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    const MyCustomForm(type: "any")));
+                      },
+                      child: Align(
+                        alignment: Alignment.bottomLeft,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 20),
+                          child: Container(
+                            height: 140,
+                            width: 170,
+                            decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(17)),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                const Image(
+                                  image:
+                                      AssetImage("assets/icons/fertilizer.png"),
+                                  height: 60,
+                                ),
+                                Text(
+                                  "fertilizercalc".tr,
+                                  style: const TextStyle(
+                                      color: Colors.black,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold),
+                                )
+                              ],
                             ),
-                            Text(
-                              "fertilizercalc".tr,
-                              style: const TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold),
-                            )
-                          ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    FertilizerRecommendationScreen()));
+                      },
+                      child: Align(
+                        alignment: Alignment.bottomLeft,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 20),
+                          child: Container(
+                            height: 140,
+                            width: 170,
+                            decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(17)),
+                            child: const Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                Image(
+                                  image: AssetImage(
+                                      "assets/svg/360_F_497743252_bsKjungNT9cOmN9lwqvEPRzW7hYcy9Q2.jpg"),
+                                  height: 60,
+                                ),
+                                Padding(
+                                  padding: EdgeInsets.only(left: 20),
+                                  child: Text(
+                                    "Fertilizer recommendation",
+                                    style: TextStyle(
+                                        color: Colors.black,
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                )
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             );
