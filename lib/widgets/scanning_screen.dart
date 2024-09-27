@@ -1,19 +1,14 @@
-// ignore_for_file: avoid_print
-
 import 'dart:io';
-
 import 'package:farmshield/pages/detection_image.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 
-// import '../screens/detection_image.dart';
-
-// ignore: must_be_immutable
 class ScanningScreen extends StatefulWidget {
-  ScanningScreen({super.key, required this.image, required this.results});
+  const ScanningScreen({Key? key, required this.image, required this.results})
+      : super(key: key);
 
-  File image;
-  List results;
+  final File image;
+  final List results;
 
   @override
   State<ScanningScreen> createState() => _ScanningScreenState();
@@ -22,22 +17,33 @@ class ScanningScreen extends StatefulWidget {
 class _ScanningScreenState extends State<ScanningScreen> {
   @override
   void initState() {
-    Future.delayed(const Duration(seconds: 2), () {
-      print(widget.results);
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) {
-        // return 
-        return DetectionDeteils(image: widget.image, results: widget.results);
-      }));
-    });
     super.initState();
+    _navigateToDetectionDetails();
+  }
+
+  void _navigateToDetectionDetails() {
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) {
+        print(widget.results);
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => DetectionDeteils(
+              image: widget.image,
+              results: widget.results,
+            ),
+          ),
+        );
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      
-        body: Center(
-      child: LottieBuilder.asset('assets/json/scan.json'),
-    ));
+      body: Center(
+        child: LottieBuilder.asset('assets/json/scan.json'),
+      ),
+    );
   }
 }

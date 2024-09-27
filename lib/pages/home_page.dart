@@ -98,10 +98,7 @@ class _HomeState extends State<Home> {
       child: StreamBuilder<DocumentSnapshot>(
           stream: docref.snapshots(),
           builder: (context, snapshot) {
-            String name = "user";
-            if (snapshot.hasData) {
-              name = snapshot.data!.get('name');
-            } else {}
+            
 
             return Column(
               children: [
@@ -140,7 +137,7 @@ class _HomeState extends State<Home> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        "${"hello".tr}  ${name.tr} 🌿",
+                        "${"hello".tr} 🌿",
                         style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: width * 0.06),

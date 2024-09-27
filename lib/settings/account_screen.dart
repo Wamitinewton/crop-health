@@ -14,7 +14,7 @@ import 'package:farmshield/utils/custom_button.dart';
 import 'package:farmshield/utils/forward_button.dart';
 import 'package:farmshield/settings/setting_item.dart';
 import 'package:farmshield/settings/setting_switch.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:ionicons/ionicons.dart';

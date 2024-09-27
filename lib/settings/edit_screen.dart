@@ -5,7 +5,7 @@ import 'package:farmshield/provider/firebase_collections.dart';
 import 'package:farmshield/settings/edit_item.dart';
 import 'package:farmshield/utils/color_util.dart';
 import 'package:farmshield/utils/custom_button.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:ionicons/ionicons.dart';
@@ -222,12 +222,12 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
     //           child: CircularProgressIndicator(),
     //         ));
     try {
-      await FirebaseAuth.instance
+      await auth.FirebaseAuth.instance
           .createUserWithEmailAndPassword(
               email: emailController.text.trim(),
               password: passwordController.text.trim())
           .then((value) => Navigator.pop(context));
-    } on FirebaseAuthException catch (e) {
+    } on auth.FirebaseAuthException catch (e) {
       showSnackBar(context, e.toString());
     }
     // GlobalKey<NavigatorState>().currentState!.pop();

@@ -1,9 +1,16 @@
 // ignore_for_file: prefer_interpolation_to_compose_strings
 
+import 'dart:convert';
 import 'dart:io';
+import 'package:crypto/crypto.dart';
+import 'package:farmshield/feature_message/controllers/appwrite_controllers.dart';
+import 'package:farmshield/feature_message/providers/user_data_provider.dart';
+import 'package:farmshield/gemini_bloc/gemini_bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../theme/provider/dark_theme_provider.dart';
 
@@ -19,118 +26,238 @@ class DetectionDeteils extends StatefulWidget {
 }
 
 class _DetectionDeteilsState extends State<DetectionDeteils> {
+  late GeminiBloc geminiBloc;
+
+  @override
+  void initState() {
+    super.initState();
+    geminiBloc = BlocProvider.of<GeminiBloc>(context);
+
+    if (widget.results.isNotEmpty) {
+      final diseaseName = widget.results[0]['label']
+          .toString()
+          .replaceAll(RegExp(r'\d+'), '')
+          .trim();
+
+      geminiBloc.add(GeminiSubmit(text: """
+Provide a comprehensive overview of the disease known as $diseaseName. 
+Include the following details:
+1. Symptoms: What are the common visible symptoms observed in crops affected by this disease?
+2. **Cause**: What is the primary cause or pathogen responsible for this disease (e.g., fungi, bacteria, virus, etc.)?
+3. **Spread**: How does this disease typically spread among crops (e.g., through soil, water, air, pests)?
+4. **Affected Crops**: Which specific types of crops are most vulnerable to this disease?
+5. **Impact on Yield**: How does the disease affect the crop's health and productivity? What are the potential losses in yield if the disease is not controlled?
+6. **Prevention**: What preventive measures can farmers take to reduce the risk of this disease affecting their crops (e.g., crop rotation, resistant varieties)?
+7. **Treatment**: What are the best treatment options available to control or eradicate the disease (e.g., agro-chemicals, organic solutions)?
+8. **Environmental Factors**: Are there any specific environmental conditions (such as temperature, humidity, soil quality) that increase the likelihood of this disease?
+9. **Time of Occurrence**: During what seasons or crop growth stages is this disease most likely to appear?
+10. **Recommended Practices**: Provide any general recommendations for farm management practices that can help mitigate the impact of this disease in the long run.
+"""));
+    }
+  }
+
+
+  Future<void> saveDetectionData(String description) async {
+    final prefs = await SharedPreferences.getInstance();
+    List<String> history = prefs.getStringList('detection_history') ?? [];
+
+    final imageHash = await _computeImageHash(widget.image);
+    final newEntry = {
+      'image': widget.image.path,
+      'imageHash': imageHash,
+      'disease': widget.results.isNotEmpty ? widget.results[0]['label'].toString() : 'Unknown',
+      'description': description,
+      'timestamp': DateTime.now().toIso8601String(),
+    };
+
+    // Check if an entry with the same image hash already exists
+    final existingIndex = history.indexWhere((item) {
+      final decoded = json.decode(item);
+      return decoded['imageHash'] == imageHash;
+    });
+
+    if (existingIndex != -1) {
+      // Update existing entry
+      history[existingIndex] = json.encode(newEntry);
+    } else {
+      // Add new entry
+      history.add(json.encode(newEntry));
+    }
+
+    await prefs.setStringList('detection_history', history);
+  }
+
+  Future<String> _computeImageHash(File imageFile) async {
+    final bytes = await imageFile.readAsBytes();
+    final digest = sha256.convert(bytes);
+    return digest.toString();
+  }
   @override
   Widget build(BuildContext context) {
-    final languageChange = Provider.of<LanguageProvider>(context);
+    Provider.of<LanguageProvider>(context);
     return Scaffold(
         backgroundColor: Colors.white,
-        body: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Center(
-              child: widget.results.isEmpty
-                  ? const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Warning',
-                          style: TextStyle(
-                              fontSize: 30,
+        body: SafeArea(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Center(
+                    child: widget.results.isEmpty
+                        ? const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'Warning',
+                                style: TextStyle(
+                                    fontSize: 30,
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                              Icon(
+                                Icons.error,
+                                color: Colors.red,
+                                size: 30,
+                              ),
+                              SizedBox(
+                                width: 10,
+                              ),
+                            ],
+                          )
+                        : Text(
+                            'identifydisease'.tr,
+                            style: const TextStyle(
+                                fontSize: 30,
+                                color: Colors.black,
+                                fontWeight: FontWeight.bold),
+                          ),
+                  ),
+                  const SizedBox(
+                    height: 50,
+                  ),
+                  Center(
+                      child: Container(
+                          width: 300,
+                          height: 300,
+                          decoration: BoxDecoration(
                               color: Colors.black,
-                              fontWeight: FontWeight.bold),
-                        ),
-                        Icon(
-                          Icons.error,
-                          color: Colors.red,
-                          size: 30,
-                        ),
-                        SizedBox(
-                          width: 10,
-                        ),
-                      ],
-                    )
-                  : Text(
-                      'identifydisease'.tr,
+                              borderRadius: BorderRadius.circular(10)),
+                          child: Image.file(
+                            widget.image,
+                            fit: BoxFit.fill,
+                          ))),
+                  const SizedBox(
+                    height: 50,
+                  ),
+                  Center(
+                    child: Text(
+                      widget.results.isEmpty
+                          ? 'cautionerror'.tr
+                          : widget.results[0]['label']
+                              .toString()
+                              .replaceAll(RegExp(r'\d+'), '')
+                              .trim()
+                              .toString()
+                              .tr,
                       style: const TextStyle(
                           fontSize: 30,
                           color: Colors.black,
                           fontWeight: FontWeight.bold),
                     ),
-            ),
-            const SizedBox(
-              height: 50,
-            ),
-            Center(
-                child: Container(
-                    width: 300,
-                    height: 300,
-                    decoration: BoxDecoration(
-                        color: Colors.black,
-                        borderRadius: BorderRadius.circular(10)),
-                    child: Image.file(
-                      widget.image,
-                      fit: BoxFit.fill,
-                    ))),
-            const SizedBox(
-              height: 50,
-            ),
-            Center(
-              child: Text(
-                widget.results.isEmpty
-                    ? 'cautionerror'.tr
-                    : widget.results[0]['label']
-                        .toString()
-                        .replaceAll(RegExp(r'\d+'), '')
-                        .trim()
-                        .toString()
-                        .tr,
-                style: const TextStyle(
-                    fontSize: 30,
-                    color: Colors.black,
-                    fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(
+                    height: 20,
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(18.0, 8, 18, 8),
+                    child: Center(
+                        child: widget.results.isEmpty
+                            ? const Text(
+                                'Description : This is not a leaf object',
+                                style: TextStyle(
+                                    fontSize: 15,
+                                    color: Colors.red,
+                                    fontWeight: FontWeight.bold),
+                              )
+                            : BlocBuilder<GeminiBloc, GeminiState>(
+                                builder: (context, state) {
+                                if (state is OnDataReceived) {
+                                  String formattedResponse = state.chat.output!
+                                      .replaceAll('**', '')
+                                      .replaceAll('\\n', '\n');
+                                  if (formattedResponse
+                                      .contains('No Leaf Found')) {
+                                    return const Text(
+                                      'Description : This is not a leaf object',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        color: Colors.red,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    );
+                                  } else {
+                                    saveDetectionData(formattedResponse);
+                                    return Column(
+                                      children: [
+                                        Text(
+                                          "possible causes".tr +
+                                              " : " +
+                                              formattedResponse,
+                                          style: const TextStyle(
+                                            fontSize: 15,
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 15),
+                                        ElevatedButton(
+                                          onPressed: () async {
+                                            bool sessionValid =
+                                                await checkUserSession(context);
+                                            if (sessionValid) {
+                                              Navigator.pushNamed(
+                                                  context, "/home");
+                                            } else {
+                                              Navigator.pushNamed(
+                                                  context, "/login");
+                                            }
+                                          },
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.grey,
+                                            minimumSize: const Size(150, 40),
+                                          ),
+                                          child: const Text(
+                                            "Chat With Expert",
+                                            style:
+                                                TextStyle(color: Colors.black),
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  }
+                                } else if (state is OnError) {
+                                  return Text(
+                                    "Error: ${state.message}",
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      color: Colors.red,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  );
+                                } else {
+                                  return const Center(
+                                    child: CircularProgressIndicator(),
+                                  );
+                                }
+                              })),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(
-              height: 20,
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(18.0, 8, 18, 8),
-              child: Center(
-                child: widget.results.isEmpty
-                    ? const Text(
-                        'Description : This is not a leaf object',
-                        style: TextStyle(
-                            fontSize: 15,
-                            color: Colors.red,
-                            fontWeight: FontWeight.bold),
-                      )
-                    : Text(
-                        "Possible Causes".tr +
-                            " :" +
-                            '${Diseases(widget.results[0]['label'].toString(), languageChange)[0]}',
-                        style: const TextStyle(
-                            fontSize: 15,
-                            color: Colors.black,
-                            fontWeight: FontWeight.bold),
-                      ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(18.0, 8, 18, 8),
-              child: Text(
-                widget.results.isEmpty
-                    ? ''
-                    : "Possible Solution".tr +
-                        " :" +
-                        '${Diseases(widget.results[0]['label'].toString(), languageChange)[1]}',
-                style: const TextStyle(
-                    fontSize: 15,
-                    color: Colors.black,
-                    fontWeight: FontWeight.bold),
-              ),
-            )
-          ],
+          ),
         ));
   }
 
@@ -631,4 +758,17 @@ class _DetectionDeteilsState extends State<DetectionDeteils> {
       return [causes, solution];
     }
   }
+
+  Future<bool> checkUserSession(BuildContext context) async {
+    Provider.of<UserDataProvider>(context, listen: false).loadDatafromLocal();
+    bool sessionValid = await checkSessions();
+
+    final userName =
+        Provider.of<UserDataProvider>(context, listen: false).getUserName;
+    if (sessionValid && userName != null && userName.isNotEmpty) {
+      return true;
+    }
+    return false;
+  }
 }
+

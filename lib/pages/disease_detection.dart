@@ -1,5 +1,9 @@
 // ignore_for_file: avoid_print, prefer_const_literals_to_create_immutables, prefer_const_constructors, unused_import
 
+import 'package:farmshield/feature_message/controllers/appwrite_controllers.dart';
+import 'package:farmshield/feature_message/providers/user_data_provider.dart';
+import 'package:farmshield/feature_message/views/home.dart';
+import 'package:farmshield/pages/history_detail.dart';
 import 'package:farmshield/pages/home_page.dart';
 import 'package:farmshield/widgets/scanning_screen.dart';
 import 'package:farmshield/settings/account_screen.dart';
@@ -8,6 +12,7 @@ import 'package:flutter_tflite/flutter_tflite.dart';
 import 'package:get/get.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 import 'package:pytorch_mobile/enums/dtype.dart';
 import 'package:pytorch_mobile/model.dart';
 import 'package:pytorch_mobile/pytorch_mobile.dart';
@@ -66,7 +71,7 @@ class _DiseaseDetectionState extends State<DiseaseDetection> {
     print(res);
   }
 
-  List list = ["Mango", "Tomato", "Potato"];
+  List list = ["Mango", "Tomato", "Potato", "Guava", "Cotton"];
   String dropdownValue = "Mango";
 
   @override
@@ -74,7 +79,7 @@ class _DiseaseDetectionState extends State<DiseaseDetection> {
     return SafeArea(
       child: Scaffold(
         backgroundColor: Color.fromARGB(246, 207, 252, 230),
-        body: pageNo == 0 ? const Home() : const AccountScreen(),
+        body: _getPage(),
         floatingActionButton: FloatingActionButton(
           backgroundColor: const Color.fromARGB(255, 7, 255, 40),
           shape:
@@ -173,7 +178,7 @@ class _DiseaseDetectionState extends State<DiseaseDetection> {
           child: const Icon(Icons.document_scanner_outlined,
               color: Colors.black), //icon inside button
         ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+        floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
         bottomNavigationBar: BottomAppBar(
           height: MediaQuery.of(context).size.height * 0.065,
           color: Color(0xFF1DB954),
@@ -208,11 +213,57 @@ class _DiseaseDetectionState extends State<DiseaseDetection> {
                   print(pageNo);
                 },
               ),
+              IconButton(
+                icon: const Icon(
+                  Icons.history,
+                  color: Colors.white,
+                ),
+                onPressed: () {
+                  setState(() {
+                    pageNo = 3;
+                  });
+
+                  print(pageNo);
+                },
+              ),
+              IconButton(
+                icon: const Icon(
+                  Icons.message,
+                  color: Colors.white,
+                ),
+                onPressed: () async {
+                  bool sessionValid = await checkUserSession(context);
+                  if (sessionValid) {
+                    setState(() {
+                      pageNo = 2;
+                    });
+                  } else {
+                    Navigator.pushNamed(context, "/login");
+                  }
+                },
+              ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Widget _getPage() {
+    switch (pageNo) {
+      case 0:
+        return const Home();
+      case 1:
+        return const AccountScreen();
+      case 2:
+        return const HomePage();
+      case 3:
+        return HistoryPage();
+      default:
+        return const Center(
+          child: Text('Disease detection Screen'),
+        );
+    }
   }
 
   Future pickImageFromGallery() async {
@@ -259,5 +310,17 @@ class _DiseaseDetectionState extends State<DiseaseDetection> {
     Navigator.push(context, MaterialPageRoute(builder: (_) {
       return ScanningScreen(image: image, results: results);
     }));
+  }
+
+  Future<bool> checkUserSession(BuildContext context) async {
+    Provider.of<UserDataProvider>(context, listen: false).loadDatafromLocal();
+    bool sessionValid = await checkSessions();
+
+    final userName =
+        Provider.of<UserDataProvider>(context, listen: false).getUserName;
+    if (sessionValid && userName != null && userName.isNotEmpty) {
+      return true;
+    }
+    return false;
   }
 }
